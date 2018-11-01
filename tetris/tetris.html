@@ -1,0 +1,223 @@
+<table><tr><td><canvas id="tutorial" width="350" height="400"></canvas></td>
+  <td>
+    Controls: <br>
+    A: Left <br>
+    D: Right <br>
+    S: Down <br>
+    W: Quick-Down <br>
+    J: Rotate left <br>
+    K: Rotate right <br>
+    L: Hold <br>
+    P: Pause <br>
+  </td>
+</tr></table>
+
+<script src="https://unpkg.com/mathjs@5.2.0/dist/math.min.js"></script>
+<script>
+var paused = 0;
+var gameover = 0;
+var rowsCleared = 0;
+var score = 0;
+var fps = 1;
+window.onload=function() {
+    canvas = document.getElementById('tutorial');
+    ctx = canvas.getContext('2d');
+    document.addEventListener("keydown",keyListen);
+    setInterval(frame,1000/fps);
+}
+
+var pstart= [4, 0]
+var height = 20;
+var width = 10;
+var gridsize = 20;
+var box = new Array(height)
+for(var y=0; y<height; y++) box[y] = new Array(width).fill("");
+var pieces = {"I" : [[0,0], [1,0], [2,0], [3,0]],
+              "O" : [[0,0], [1,0], [0,1], [1,1]],
+              "T" : [[0,0], [1,0], [2,0], [1,1]],
+              "S" : [[0,0], [1,0], [1,1], [2,1]],
+              "Z" : [[0,1], [1,1], [1,0], [2,0]],
+              "J" : [[0,0], [0,1], [1,1], [2,1]],
+              "L" : [[0,0], [0,1], [1,0], [2,0]]};
+var colors = {"I" : "rgb(0, 255, 255)",
+              "O" : "rgb(255, 255, 0)",
+              "T" : "rgb(128, 0, 128)",
+              "S" : "rgb(0, 255, 0)",
+              "Z" : "rgb(255, 0, 0)",
+              "J" : "rgb(0, 0, 255)",
+              "L" : "rgb(255, 165, 0)"};
+var rot90 = [[0,-1], [1, 0]];
+
+function randPieces(){
+    function shuffle(a) {
+        var j, x, i;
+        for (i = a.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            x = a[i];
+            a[i] = a[j];
+            a[j] = x;
+        }
+        return a;
+    }
+    var plst = Object.keys(pieces);
+    shuffle(plst);
+    return plst;
+}
+nexts = randPieces();
+holdPiece = "";
+canHold = 1;
+curpiece = nexts.pop();
+curpos = pstart.slice(0);
+rot = 0;
+
+function getsqrs(piece, pos, rot){
+    var rotM = math.pow(rot90, rot);
+    return pieces[piece].map(p => math.add(pos, math.multiply(rotM, p)));
+}
+
+function collides(piece, pos, rot){
+    var sqrs = getsqrs(piece, pos, rot);
+    return sqrs.some(p => p[0]<0 || p[0]>=width || p[1]<0 || p[1]>=height || box[p[1]][p[0]] !== "");
+}
+
+// could be more efficient but who cares
+function clearrows(){
+    var amt = 0;
+    for(var y = 0; y < height; y++){
+        if(box[y].every(x => (x!==""))){
+            rowsCleared++;
+            amt++;
+            for(var i = y-1; i>=0; i--){
+                var up = i>0 ? box[i] : Array(width).fill("");
+                box[i+1] = up.slice(0);
+            }
+        }
+    }
+    if(amt === 1) score += 40;
+    if(amt === 2) score += 100;
+    if(amt === 3) score += 300;
+    if(amt === 4) score += 1200;
+}
+
+function getNextPiece(){
+    rot = 0;
+    if(collides(nexts[nexts.length-1], pstart, rot)){
+        gameover=1;
+        draw();
+        return;
+    }
+    curpiece = nexts.pop();
+    if(nexts.length < 1) nexts = randPieces();
+    curpos = pstart.slice(0);
+}
+
+function frame(){
+    if(gameover || paused) return;
+    //console.log(box);
+    if(collides(curpiece, [curpos[0], curpos[1]+1], rot)){
+        // cement current piece into the box
+        getsqrs(curpiece, curpos, rot).forEach(function(p){
+            box[p[1]][p[0]] = curpiece;
+        });
+        clearrows();
+        getNextPiece();
+        canHold = 1;
+    }else{
+        curpos[1]++;
+    }
+    draw();
+}
+
+function keyListen(evt){
+    if(evt.keyCode === 65){
+        if(!collides(curpiece, [curpos[0]-1, curpos[1]], rot)) curpos[0]--;
+    }else if(evt.keyCode === 68){
+        if(!collides(curpiece, [curpos[0]+1, curpos[1]], rot)) curpos[0]++;
+    }if(evt.keyCode === 75){
+        if(!collides(curpiece, curpos, rot+1)) rot = rot+1%4;
+    }if(evt.keyCode === 74){
+        if(!collides(curpiece, curpos, rot+3)) rot = rot+3%4;
+    }else if(evt.keyCode === 83){
+        if(!collides(curpiece, [curpos[0], curpos[1]+1], rot)){
+            curpos[1]++;
+        }else{
+            frame();
+        }
+    }else if(evt.keyCode === 87){
+        while(!collides(curpiece, [curpos[0], curpos[1]+1], rot)) curpos[1]++;
+        frame();
+    }else if(evt.keyCode === 76){
+        if(canHold){
+            hold = 1;
+            if(holdPiece !== "") nexts.push(holdPiece);
+            holdPiece = curpiece;
+            getNextPiece();
+            canHold = 0;
+        }
+    }else if(evt.keyCode === 80){
+        paused = !paused;
+    }
+    draw();
+}
+
+function drawsqr(piece, pos){
+    ctx.fillStyle = colors[piece];
+    var corner = math.multiply(gridsize, pos);
+    ctx.fillRect(corner[0]+1, corner[1]+1, gridsize-2, gridsize-2);
+}
+
+function draw(){
+    // draw cemented blocks
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillRect(0, 0, width*gridsize, height*gridsize);
+    for(var y=0; y<height; y++){
+        for(var x=0; x<width; x++){
+            if(box[y][x] !== ""){
+                drawsqr(box[y][x], [x,y]);
+            }
+        }
+    }
+
+    // draw currently-being-placed block
+    getsqrs(curpiece, curpos, rot).forEach(function(p){
+        drawsqr(curpiece, p);
+    });
+
+    // draw next block
+    ctx.fillStyle = "rgb(50, 50, 50)";
+    ctx.fillRect(width*gridsize, 0, 150, height*gridsize);
+    ctx.font = "20px Courier New";
+    ctx.fillStyle = "rgb(255, 255, 255)";
+    ctx.fillText("Next", 225, 26);
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillRect(220, 40, gridsize*4, gridsize*2);
+    getsqrs(nexts[nexts.length-1], [11,2], 0).forEach(function(p){
+        drawsqr(nexts[nexts.length-1], p);
+    });
+
+    // draw hold block
+    ctx.fillStyle = "rgb(255, 255, 255)";
+    ctx.fillText("Hold", 225, 126);
+    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillRect(220, 140, gridsize*4, gridsize*2);
+    if(holdPiece !== ""){
+        getsqrs(holdPiece, [11,7], 0).forEach(function(p){
+            drawsqr(holdPiece, p);
+        });
+    }
+
+    // draw score and rows
+    ctx.fillStyle = "rgb(255, 255, 255)";
+    ctx.fillText("Score", 215, 220);
+    ctx.fillText(score, 215, 240);
+    ctx.fillText("Rows", 215, 280);
+    ctx.fillText(rowsCleared, 215, 300);
+
+    // draw pause/game over
+    if(paused || gameover){
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        ctx.fillText(gameover ? "GAME OVER" : "PAUSED", 215, 360);
+    }
+}
+</script>
+
