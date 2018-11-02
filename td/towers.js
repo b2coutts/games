@@ -57,6 +57,7 @@ function mkproj(src, w, h, img, speed, target, pierce, eff, heatseek){
             if(d < smlt*speed){
                 me.x = tc.x - me.w/2;
                 me.y = tc.y - me.h/2;
+                me.heatseek = false;
             }else{
                 var rat = smlt*speed / d;
                 me.vx = rat*(tc.x - mc.x);
@@ -404,7 +405,7 @@ slinger_bp =
      'era' : 1,
      'level' : 1,
      'cost' : 10,
-     'dmg' : 10,
+     'dmg' : 15,
      'range' : 60,
      'shotcd' : 40,
      'lastshot' : 0,
@@ -419,9 +420,9 @@ slinger_bp =
      'eff' : bleedeff,
      'tooltip_stats' : ['cost', 'dmg', 'range', 'shotcd'],
      'desc' : "Close range single-target damage",
-     'upgrades' : {1 : {'dmg' : 10, 'range' : 10, 'shotcd' : -10, 'cost' : 10},
-                   2 : {'dmg' : 20, 'range' : 10, 'shotcd' : -5, 'cost' : 30},
-                   3 : {'dmg' : 20, 'range' : 10, 'shotcd' : -5, 'cost' : 100}},
+     'upgrades' : {1 : {'dmg' : 15, 'range' : 10, 'shotcd' : -10, 'cost' : 10},
+                   2 : {'dmg' : 30, 'range' : 10, 'shotcd' : -5, 'cost' : 30},
+                   3 : {'dmg' : 30, 'range' : 10, 'shotcd' : -5, 'cost' : 100}},
      'builder_type' : 'make_slinger'};
 
 spearman_bp =
@@ -599,7 +600,7 @@ laser_cannon_bp =
      'img' : document.images.img_laser_cannon,
      'era' : 5,
      'level' : 1,
-     'cost' : 10000,
+     'cost' : 50000,
      'dmg' : 50000,
      'range' : 300,
      'lastshot' : 0,
