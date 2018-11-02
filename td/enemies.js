@@ -150,7 +150,7 @@ function make_enemy(name, maxhp, speed, w, h, img, gold){
 
 function getNextWave(){
     var gold = wavenum;
-    var maxhp = Math.floor(5 + 15*wavenum*wavenum + .3 * wavenum*wavenum*wavenum);
+    var maxhp = Math.floor(10 + 5*wavenum*wavenum + .6 * wavenum*wavenum*wavenum);
     var slime = make_enemy('slime', maxhp, .6, 20, 20, document.images.img_slime, gold);
     var wave = make_wave(slime, 20, 40);
 
