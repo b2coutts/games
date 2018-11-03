@@ -88,7 +88,7 @@ window.main = function(){
     if(isdown('Space')) scramt = fast_scrspd;
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
-            if(grid[y][x] !== null && grid[y][x].clearvframe !== null) scramt = 0;
+            if(grid[y][x] !== null && (grid[y][x].clearvframe !== null || grid[y][x].falling !== null)) scramt = 0;
         }
     }
     offset += ratemult * scramt;
@@ -114,7 +114,7 @@ window.main = function(){
             }else if(block.falling !== null){
                 block.falling += fallspd * ratemult;
                 if(block.falling >= gsize){
-                    if(y === nrows-2 || grid[y+2][x] !== null){
+                    if(y === nrows-2 || (grid[y+2][x] !== null && grid[y+2][x].falling === null)){
                         block.falling = null;
                     }else{
                         block.falling -= gsize;
