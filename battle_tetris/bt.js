@@ -21,6 +21,10 @@ function init(){
     cury = Math.floor(nrows*3/4);
 
     keyInit();
+
+    if(debug){
+        for(var i=3; i<11; i++) grid[i][5] = mkblock(block_cols[i%6]);
+    }
 }
 
 window.onload=function(){
@@ -118,7 +122,12 @@ window.main = function(){
                         if(y === nrows-2 || (grid[y+2][x] !== null && grid[y+2][x].falling === null)){
                             block.falling = null;
                         }else{
-                            block.falling -= gsize;
+                            if(grid[y+2][x] !== null && grid[y+2][x].falling !== null){
+                                block.fallvframe = grid[y+2][x].fallvframe;
+                                block.falling = 0;
+                            }else{
+                                block.falling -= gsize;
+                            }
                         }
                         grid[y+1][x] = block;
                         grid[y][x] = null;
