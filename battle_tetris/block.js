@@ -3,12 +3,13 @@ var block_cols = ['#A00000', '#00A000', '#0000A0', '#A0A000', '#A000A0',  '#00A0
 function mkblock(col){
     return {'type' : 'block',
             'col'  : col,
+            'combo' : 1,
             'falling' : null,
             'clearvframe' : null};
 }
 
 function swappable(x,y){
-    return (grid[y][x] === null || (!grid[y][x].falling && grid[y][x].clearvframe === null)) &&
+    return (grid[y][x] === null || (grid[y][x].falling === null && grid[y][x].clearvframe === null)) &&
            (y==0 || grid[y-1][x] === null || grid[y-1][x].falling === null);
 }
 
@@ -16,8 +17,13 @@ function fallable(block){
     return block !== null && block.falling === null && block.clearvframe === null;
 }
 
-function clearable(block){
-    return block !== null && block.falling === null && block.clearvframe === null;
+// checks if a block is clearable; if a color is supplied, also requires the
+// block to have that color
+function clearable(block, col=null){
+    return block !== null &&
+           block.falling === null &&
+           (block.clearvframe === null || block.clearvframe === vframe) &&
+           (col === null || block.col === col);
 }
 
 function makefall(block){
@@ -25,54 +31,27 @@ function makefall(block){
     block.fallvframe = vframe + fallwait;
 }
 
-// BFS from (x,y) for the colour col, pushing all nodes to acc
-function bfs(x, y, grpnum, seen, col, acc){
-    if(y>=0 && y<nrows && x>=0 && x<ncols &&
-       !seen[y][x] && clearable(grid[y][x]) && grid[y][x].col === col){
-        acc.push([x,y]);
-        seen[y][x] = grpnum;
-        bfs(x-1, y, grpnum, seen, col, acc);
-        bfs(x+1, y, grpnum, seen, col, acc);
-        bfs(x, y-1, grpnum, seen, col, acc);
-        bfs(x, y+1, grpnum, seen, col, acc);
-    }
-}
-
 // check for clears
 function findclears(){
-    var seen = new Array(nrows);
-    for(var i=0; i<nrows; i++) seen[i] = new Array(ncols).fill(0);
-    var grpnum = 1;
-
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
-            if(!seen[y][x] && clearable(grid[y][x])){
+            if(clearable(grid[y][x])){
                 var col = grid[y][x].col;
-                if(grid[y][x].clearvframe !== null) col = '#A0A0A0';
-                var grp = [];
-                bfs(x, y, grpnum, seen, col, grp);
-                for(var i = 0; i < grp.length; i++){
-                    var [gx,gy] = grp[i];
-                    if(gx<ncols-2 && seen[gy][gx+1] === grpnum && seen[gy][gx+2] === grpnum){
-                        grid[gy][gx].clearvframe = vframe;
-                        grid[gy][gx+1].clearvframe = vframe;
-                        grid[gy][gx+2].clearvframe = vframe;
-                    }
-                    if(gy<nrows-2 && seen[gy+1][gx] === grpnum && seen[gy+2][gx] === grpnum){
-                        grid[gy][gx].clearvframe = vframe;
-                        grid[gy+1][gx].clearvframe = vframe;
-                        grid[gy+2][gx].clearvframe = vframe;
+                if(x>1 && clearable(grid[y][x-1], col) && clearable(grid[y][x-2], col)){
+                    var combo = Math.max(grid[y][x].combo,  grid[y][x-1].combo,  grid[y][x-2].combo);
+                    for(var dx = 0; dx<3; dx++){
+                        grid[y][x-dx].clearvframe = vframe;
+                        grid[y][x-dx].combo = combo;
                     }
                 }
-                grpnum++;
+                if(y>1 && clearable(grid[y-1][x], col) && clearable(grid[y-2][x], col)){
+                    var combo = Math.max(grid[y][x].combo,  grid[y-1][x].combo,  grid[y-2][x].combo);
+                    for(var dy = 0; dy<3; dy++){
+                        grid[y-dy][x].clearvframe = vframe;
+                        grid[y-dy][x].combo = combo;
+                    }
+                }
             }
-        }
-    }
-
-    // for debugging
-    for(var y=0; y<nrows; y++){
-        for(var x=0; x<ncols; x++){
-            if(grid[y][x] !== null) grid[y][x].seen = seen[y][x];
         }
     }
 }

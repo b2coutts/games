@@ -37,7 +37,9 @@ window.onload=function(){
 function randrow(){
     var row = new Array(ncols);
     for(var i=0; i<ncols; i++){
-        row[i] = mkblock(block_cols[randint(block_cols.length)]);
+        do{
+            row[i] = mkblock(block_cols[randint(block_cols.length)]);
+        }while(i>=2 && row[i-2].col === row[i-1].col && row[i-1].col === row[i].col);
     }
     return row;
 }
@@ -105,7 +107,6 @@ window.main = function(){
     }
 
     // simulate blocks
-    findclears();
     // iterate backwards over y for falling resolution to work
     for(var y=nrows-1; y>=0; y--){
         for(var x=0; x<ncols; x++){
@@ -113,6 +114,9 @@ window.main = function(){
             if(block === null) continue;
             if(block.clearvframe !== null){
                 if(vframe >= block.clearvframe + cleartime){
+                    if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
+                        grid[y-1][x].combo = block.combo + 1;
+                    }
                     grid[y][x] = null;
                 }
             }else if(block.falling !== null){
@@ -137,10 +141,16 @@ window.main = function(){
                 if(fallable(block) && y<grid.length-1 &&
                    (grid[y+1][x] === null || grid[y+1][x].falling !== null)){
                     makefall(block);
+                    if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
+                        grid[y-1][x].combo = block.combo;
+                    }
+                }else{
+                    block.combo = 1;
                 }
             }
         }
     }
+    findclears();
 
     frame += 1;
     vframe += ratemult;
@@ -165,16 +175,10 @@ function draw(){
                     ctx.fillRect(x*gsize + gsize/2-sz, ylvl-2 + gsize/2-sz, sz*2, sz*2);
                 }
 
-                // for debug purposes
-                if(debug){
-                    var letter = 'S';
-                    if(block.falling !== null) letter = 'F';
-                    if(block.clearvframe !== null) letter = 'C';
+                if(block.clearvframe !== null){
                     ctx.fillStyle = '#000000';
                     ctx.font = '30px Courier New';
-                    ctx.fillText(letter, x*gsize+12, ylvl+35);
-                    ctx.font = '15px Courier New';
-                    ctx.fillText(block.seen, x*gsize+30, ylvl+40);
+                    ctx.fillText('x' + block.combo, x*gsize+12, ylvl+35);
                 }
             }
         }
