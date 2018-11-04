@@ -22,6 +22,7 @@ function clearable(block){
 
 function makefall(block){
     block.falling = 0;
+    block.fallvframe = vframe + fallwait;
 }
 
 // BFS from (x,y) for the colour col, pushing all nodes to acc

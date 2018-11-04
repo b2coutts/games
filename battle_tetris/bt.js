@@ -112,15 +112,17 @@ window.main = function(){
                     grid[y][x] = null;
                 }
             }else if(block.falling !== null){
-                block.falling += fallspd * ratemult;
-                if(block.falling >= gsize){
-                    if(y === nrows-2 || (grid[y+2][x] !== null && grid[y+2][x].falling === null)){
-                        block.falling = null;
-                    }else{
-                        block.falling -= gsize;
+                if(vframe >= block.fallvframe){
+                    block.falling += fallspd * ratemult;
+                    if(block.falling >= gsize){
+                        if(y === nrows-2 || (grid[y+2][x] !== null && grid[y+2][x].falling === null)){
+                            block.falling = null;
+                        }else{
+                            block.falling -= gsize;
+                        }
+                        grid[y+1][x] = block;
+                        grid[y][x] = null;
                     }
-                    grid[y+1][x] = block;
-                    grid[y][x] = null;
                 }
             }else{
                 if(fallable(block) && y<grid.length-1 &&
