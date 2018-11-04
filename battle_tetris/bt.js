@@ -17,8 +17,8 @@ function init(){
     for(var i=0; i<nrows; i++) grid[i] = new Array(ncols).fill(null);
     offset = 0;
 
-    curx = 0;
-    cury = 0;
+    curx = Math.floor((ncols-1)/2);
+    cury = Math.floor(nrows*3/4);
 
     keyInit();
 }

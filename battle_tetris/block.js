@@ -52,16 +52,16 @@ function findclears(){
                 var grp = [];
                 bfs(x, y, grpnum, seen, col, grp);
                 for(var i = 0; i < grp.length; i++){
-                    var [x,y] = grp[i];
-                    if(x<ncols-2 && seen[y][x+1] === grpnum && seen[y][x+2] === grpnum){
-                        grid[y][x].clearvframe = vframe;
-                        grid[y][x+1].clearvframe = vframe;
-                        grid[y][x+2].clearvframe = vframe;
+                    var [gx,gy] = grp[i];
+                    if(gx<ncols-2 && seen[gy][gx+1] === grpnum && seen[gy][gx+2] === grpnum){
+                        grid[gy][gx].clearvframe = vframe;
+                        grid[gy][gx+1].clearvframe = vframe;
+                        grid[gy][gx+2].clearvframe = vframe;
                     }
-                    if(y<nrows-2 && seen[y+1][x] === grpnum && seen[y+2][x] === grpnum){
-                        grid[y][x].clearvframe = vframe;
-                        grid[y+1][x].clearvframe = vframe;
-                        grid[y+2][x].clearvframe = vframe;
+                    if(gy<nrows-2 && seen[gy+1][gx] === grpnum && seen[gy+2][gx] === grpnum){
+                        grid[gy][gx].clearvframe = vframe;
+                        grid[gy+1][gx].clearvframe = vframe;
+                        grid[gy+2][gx].clearvframe = vframe;
                     }
                 }
                 grpnum++;
