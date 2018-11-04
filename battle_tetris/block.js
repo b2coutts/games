@@ -37,24 +37,11 @@ function bfs(x, y, grpnum, seen, col, acc){
     }
 }
 
-// TODO: this is pretty brute-force; might need to be more clever
-function has3(grp, grpnum, seen){
-    for(var i = 0; i < grp.length; i++){
-        var [x,y] = grp[i];
-        if((x < ncols-2 && seen[y][x+1] === grpnum && seen[y][x+2] === grpnum) ||
-           (y < nrows-2 && seen[y+1][x] === grpnum && seen[y+2][x] === grpnum)){
-            return true;
-        }
-    }
-    return false;
-}
-
 // check for clears
 function findclears(){
     var seen = new Array(nrows);
     for(var i=0; i<nrows; i++) seen[i] = new Array(ncols).fill(0);
     var grpnum = 1;
-    var anycleared = false;
 
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
@@ -63,11 +50,17 @@ function findclears(){
                 if(grid[y][x].clearvframe !== null) col = '#A0A0A0';
                 var grp = [];
                 bfs(x, y, grpnum, seen, col, grp);
-                if(has3(grp, grpnum, seen)){
-                    for(var i=0; i<grp.length; i++){
-                        var block = grid[grp[i][1]] [grp[i][0]];
-                        anycleared = true;
-                        block.clearvframe = vframe;
+                for(var i = 0; i < grp.length; i++){
+                    var [x,y] = grp[i];
+                    if(x<ncols-2 && seen[y][x+1] === grpnum && seen[y][x+2] === grpnum){
+                        grid[y][x].clearvframe = vframe;
+                        grid[y][x+1].clearvframe = vframe;
+                        grid[y][x+2].clearvframe = vframe;
+                    }
+                    if(y<nrows-2 && seen[y+1][x] === grpnum && seen[y+2][x] === grpnum){
+                        grid[y][x].clearvframe = vframe;
+                        grid[y+1][x].clearvframe = vframe;
+                        grid[y+2][x].clearvframe = vframe;
                     }
                 }
                 grpnum++;
@@ -81,5 +74,4 @@ function findclears(){
             if(grid[y][x] !== null) grid[y][x].seen = seen[y][x];
         }
     }
-    var foo = 0;
 }
