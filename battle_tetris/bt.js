@@ -4,6 +4,7 @@ var ratemult = 1;
 var grid, nextrow;
 var offset;
 var ftimer;
+var totallines;
 
 var curx, cury;
 
@@ -18,6 +19,7 @@ function init(){
     for(var i=0; i<nrows; i++) grid[i] = new Array(ncols).fill(null);
     offset = 0;
     ftimer = 0;
+    totallines = 0;
 
     curx = Math.floor((ncols-1)/2);
     cury = Math.floor(nrows*3/4);
@@ -55,6 +57,8 @@ function gridshift(){
     grid.push(nextrow);
     nextrow = randrow();
     cury = Math.max(0, cury-1);
+    totallines++;
+    scrspd += scraccel;
 
     return true;
 }
@@ -219,7 +223,7 @@ function draw(){
     ctx.translate(gsize*ncols,0);
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '30px Courier New';
-    ctx.fillText('Speed: ' + scrspd*100, 10, 50);
+    ctx.fillText('Speed: ' + Math.floor(scrspd*100), 10, 50);
     ctx.fillText('Freez: ' + ftimer, 10, 100);
     ctx.restore();
 }

@@ -10,6 +10,8 @@ var fallwait = 15;
 var fallspd = 20;
 var cleartime = 60;
 
+var scraccel = .01;
+
 // given a number of cleared blocks, determine how much freeze time should be
 // added
 function combo_ftime(numcleared){
