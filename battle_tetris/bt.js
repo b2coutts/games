@@ -3,6 +3,7 @@ var ratemult = 1;
 
 var grid, nextrow;
 var offset;
+var ftimer;
 
 var curx, cury;
 
@@ -16,6 +17,7 @@ function init(){
     grid = new Array(nrows);
     for(var i=0; i<nrows; i++) grid[i] = new Array(ncols).fill(null);
     offset = 0;
+    ftimer = 0;
 
     curx = Math.floor((ncols-1)/2);
     cury = Math.floor(nrows*3/4);
@@ -66,6 +68,9 @@ window.main = function(){
     if(gameover) return;
     window.requestAnimationFrame(main);
 
+    frame += 1;
+    vframe += ratemult;
+
     for(var i=0; i<evqueue.length; i++){
         var e = evqueue[i];
         if(e.code === kbs['up']){
@@ -91,19 +96,27 @@ window.main = function(){
     evqueue = [];
 
     var scramt = scrspd;
-    if(isdown('Space')) scramt = fast_scrspd;
+    var scrpause = false;
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
-            if(grid[y][x] !== null && (grid[y][x].clearvframe !== null || grid[y][x].falling !== null)) scramt = 0;
+            if(grid[y][x] !== null && (grid[y][x].clearvframe !== null || grid[y][x].falling !== null)) scrpause = true;
         }
     }
-    offset += ratemult * scramt;
-    while(offset > gsize){
-        offset -= gsize;
-        if(!gridshift()){
-            game_over();
-            return;
+    if(isdown('Space') && !scrpause){
+        ftimer = 0;
+        scramt = fast_scrspd;
+    }
+    if(ftimer <= 0 && !scrpause){
+        offset += ratemult * scramt;
+        while(offset > gsize){
+            offset -= gsize;
+            if(!gridshift()){
+                game_over();
+                return;
+            }
         }
+    }else if(!scrpause){
+        ftimer = Math.max(0, ftimer - ratemult);
     }
 
     // simulate blocks
@@ -115,7 +128,7 @@ window.main = function(){
             if(block.clearvframe !== null){
                 if(vframe >= block.clearvframe + cleartime){
                     if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
-                        grid[y-1][x].combo = block.combo + 1;
+                        grid[y-1][x].chain = block.chain + 1;
                     }
                     grid[y][x] = null;
                 }
@@ -142,23 +155,24 @@ window.main = function(){
                    (grid[y+1][x] === null || grid[y+1][x].falling !== null)){
                     makefall(block);
                     if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
-                        grid[y-1][x].combo = block.combo;
+                        grid[y-1][x].chain = block.chain;
                     }
                 }else{
-                    block.combo = 1;
+                    block.chain = 1;
                 }
             }
         }
     }
     findclears();
 
-    frame += 1;
-    vframe += ratemult;
-
     draw();
 }
 
 function draw(){
+    ctx.save();
+    ctx.fillStyle = '#505050';
+    ctx.fillRect(0, 0, 500, 600);
+
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, gsize*ncols, gsize*(nrows+1));
     for(var y=0; y<nrows; y++){
@@ -178,7 +192,7 @@ function draw(){
                 if(block.clearvframe !== null){
                     ctx.fillStyle = '#000000';
                     ctx.font = '30px Courier New';
-                    ctx.fillText('x' + block.combo, x*gsize+12, ylvl+35);
+                    ctx.fillText('x' + block.chain, x*gsize+12, ylvl+35);
                 }
             }
         }
@@ -199,4 +213,13 @@ function draw(){
     ctx.lineTo(curx*gsize, (cury+2)*gsize-offset);
     ctx.lineTo(curx*gsize, (cury+1)*gsize-offset);
     ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(gsize*ncols,0);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '30px Courier New';
+    ctx.fillText('Speed: ' + scrspd*100, 10, 50);
+    ctx.fillText('Freez: ' + ftimer, 10, 100);
+    ctx.restore();
 }

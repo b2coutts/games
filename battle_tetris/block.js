@@ -3,7 +3,7 @@ var block_cols = ['#A00000', '#00A000', '#0000A0', '#A0A000', '#A000A0',  '#00A0
 function mkblock(col){
     return {'type' : 'block',
             'col'  : col,
-            'combo' : 1,
+            'chain' : 1,
             'falling' : null,
             'clearvframe' : null};
 }
@@ -33,25 +33,33 @@ function makefall(block){
 
 // check for clears
 function findclears(){
+    var maxchain = 0;
+    var numcleared = 0;
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
             if(clearable(grid[y][x])){
                 var col = grid[y][x].col;
                 if(x>1 && clearable(grid[y][x-1], col) && clearable(grid[y][x-2], col)){
-                    var combo = Math.max(grid[y][x].combo,  grid[y][x-1].combo,  grid[y][x-2].combo);
+                    var chain = Math.max(grid[y][x].chain,  grid[y][x-1].chain,  grid[y][x-2].chain);
                     for(var dx = 0; dx<3; dx++){
+                        if(grid[y][x-dx].clearvframe === null) numcleared++;
                         grid[y][x-dx].clearvframe = vframe;
-                        grid[y][x-dx].combo = combo;
+                        grid[y][x-dx].chain = chain;
                     }
+                    maxchain = Math.max(maxchain, chain);
                 }
                 if(y>1 && clearable(grid[y-1][x], col) && clearable(grid[y-2][x], col)){
-                    var combo = Math.max(grid[y][x].combo,  grid[y-1][x].combo,  grid[y-2][x].combo);
+                    var chain = Math.max(grid[y][x].chain,  grid[y-1][x].chain,  grid[y-2][x].chain);
                     for(var dy = 0; dy<3; dy++){
+                        if(grid[y-dy][x].clearvframe === null) numcleared++;
                         grid[y-dy][x].clearvframe = vframe;
-                        grid[y-dy][x].combo = combo;
+                        grid[y-dy][x].chain = chain;
                     }
+                    maxchain = Math.max(maxchain, chain);
                 }
             }
         }
     }
+    ftimer += combo_ftime(numcleared);
+    ftimer += chain_ftime(maxchain);
 }
