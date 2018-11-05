@@ -5,7 +5,7 @@ var ncols = 6;
 var gsize = 50;
 
 var scrspd = .3;
-var fast_scrspd = 1.3
+var fast_scrspd = 2;
 var fallwait = 15;
 var fallspd = 20;
 var cleartime = 60;
