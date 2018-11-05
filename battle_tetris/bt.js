@@ -96,6 +96,14 @@ window.main = function(){
                 grid[cury][curx+1] = tmp;
             }
         }
+        if(e.code === 'KeyG'){
+            for(var y=nrows-1; y>0; y--){
+                if(grid[y].every(p => p === null)){
+                    spawn_garbage(0, y, ncols);
+                    break;
+                }
+            }
+        }
     }
     evqueue = [];
 
@@ -138,22 +146,37 @@ window.main = function(){
                 }
             }else if(block.falling !== null){
                 if(vframe >= block.fallvframe){
+                    var len = block.type === 'garbage' ? block.len : 1;
                     block.falling += fallspd * ratemult;
                     if(block.falling >= gsize){
-                        if(y === nrows-2 || (grid[y+2][x] !== null && grid[y+2][x].falling === null)){
-                            block.falling = null;
-                        }else{
-                            if(grid[y+2][x] !== null && grid[y+2][x].falling !== null){
-                                block.fallvframe = grid[y+2][x].fallvframe;
-                                block.falling = 0;
-                            }else{
-                                block.falling -= gsize;
+                        for(var i=0; i < len; i++){
+                            grid[y+1][x+i] = block;
+                            grid[y][x+i] = null;
+                            if(y === nrows-2 || (grid[y+2][x+i] !== null && grid[y+2][x+i].falling === null)){
+                                block.falling = null;
                             }
                         }
-                        grid[y+1][x] = block;
-                        grid[y][x] = null;
+                        if(block.falling !== null){
+                            block.falling -= gsize;
+                            for(var i=0; i < len; i++){
+                                block.fallvframe = vframe;
+                                if(grid[y+2][x+i] !== null && grid[y+2][x+i].falling !== null){
+                                    block.fallvframe = Math.max(block.fallvframe, grid[y+2][x+i].fallvframe);
+                                    block.falling = 0;
+                                }
+                            }
+                        }
                     }
+                    x += len-1;
                 }
+            }else if(block.type === 'garbage'){
+                var mkfall = true;
+                for(var i=0; i<block.len; i++){
+                    mkfall = mkfall & (grid[y+1][x+i] === null || grid[y+1][x+i].falling !== null);
+                }
+                if(mkfall) makefall(block);
+
+                x += block.len-1;
             }else{
                 if(fallable(block) && y<grid.length-1 &&
                    (grid[y+1][x] === null || grid[y+1][x].falling !== null)){

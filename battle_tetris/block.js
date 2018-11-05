@@ -8,6 +8,19 @@ function mkblock(col){
             'clearvframe' : null};
 }
 
+function spawn_garbage(x, y, len){
+    var garbage = {'type' : 'garbage',
+                   'col' : '#A0A0A0',
+                   'chain' : 1,
+                   'falling' : null,
+                   'clearvframe' : null,
+                   'startx' : x,
+                   'len' : len};
+    for(var i=0; i<len; i++){
+        grid[y][x+i] = garbage;
+    }
+}
+
 function swappable(x,y){
     return (grid[y][x] === null || (grid[y][x].falling === null && grid[y][x].clearvframe === null)) &&
            (y==0 || grid[y-1][x] === null || grid[y-1][x].falling === null);
@@ -21,6 +34,7 @@ function fallable(block){
 // block to have that color
 function clearable(block, col=null){
     return block !== null &&
+           block.type === 'block' &&
            block.falling === null &&
            (block.clearvframe === null || block.clearvframe === vframe) &&
            (col === null || block.col === col);
