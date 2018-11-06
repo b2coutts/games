@@ -10,6 +10,10 @@ var fallwait = 15;
 var fallspd = 20;
 var cleartime = 60;
 
+var garbage_inittime = 30;
+var garbage_blocktime = 10;
+var garbage_finaltime = 15;
+
 var scraccel = .01;
 
 // given a number of cleared blocks, determine how much freeze time should be

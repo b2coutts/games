@@ -11,9 +11,11 @@ function mkblock(col){
 function spawn_garbage(x, y, len){
     var garbage = {'type' : 'garbage',
                    'col' : '#A0A0A0',
-                   'chain' : 1,
+                   'chain' : 0,
                    'falling' : null,
+                   'revealvframe' : null,
                    'clearvframe' : null,
+                   'clearseen' : false,
                    'startx' : x,
                    'len' : len};
     for(var i=0; i<len; i++){
@@ -43,12 +45,48 @@ function clearable(block, col=null){
 function makefall(block){
     block.falling = 0;
     block.fallvframe = vframe + fallwait;
+    if('justblocked' in block && block.justblocked>0) block.fallvframe -= fallwait;
+}
+
+function randcols(n){
+    var colors = new Array(n);
+    for(var i=0; i<n; i++){
+        do{
+            colors[i] = block_cols[randint(block_cols.length)];
+        }while(i>=2 && colors[i-2] === colors[i-1] && colors[i-1] === colors[i]);
+    }
+    return colors;
+}
+
+function randrow(){
+    return randcols(ncols).map(mkblock);
+}
+
+function gdfs(x, y, chain, pushto){
+    if(x>=0 && x<ncols && y>=0 && y<nrows &&
+       grid[y][x] !== null && grid[y][x].type === 'garbage' && !grid[y][x].clearseen){
+        grid[y][x] = Object.assign({}, grid[y][x]);
+        grid[y][x].clearseen = true;
+        pushto.push([x,y,chain+1]);
+        gdfs(x-1, y, chain, pushto);
+        gdfs(x+1, y, chain, pushto);
+        gdfs(x, y-1, chain, pushto);
+        gdfs(x, y+1, chain, pushto);
+    }
+}
+
+function findgarbage(x, y, chain, pushto){
+    gdfs(x-1, y, chain, pushto);
+    gdfs(x+1, y, chain, pushto);
+    gdfs(x, y-1, chain, pushto);
+    gdfs(x, y+1, chain, pushto);
 }
 
 // check for clears
 function findclears(){
     var maxchain = 0;
     var numcleared = 0;
+    var clears = [];
     for(var y=0; y<nrows; y++){
         for(var x=0; x<ncols; x++){
             if(clearable(grid[y][x])){
@@ -59,6 +97,7 @@ function findclears(){
                         if(grid[y][x-dx].clearvframe === null) numcleared++;
                         grid[y][x-dx].clearvframe = vframe;
                         grid[y][x-dx].chain = chain;
+                        clears.push([x-dx, y, chain]);
                     }
                     maxchain = Math.max(maxchain, chain);
                 }
@@ -68,12 +107,35 @@ function findclears(){
                         if(grid[y-dy][x].clearvframe === null) numcleared++;
                         grid[y-dy][x].clearvframe = vframe;
                         grid[y-dy][x].chain = chain;
+                        clears.push([x, y-dy, chain]);
                     }
                     maxchain = Math.max(maxchain, chain);
                 }
             }
         }
     }
+
+    clears.sort((a,b) => b[2]-a[2]);
+
+    // find garbage to clear
+    var garbage = [];
+    for(var i=0; i<clears.length; i++){
+        var [x,y,chain] = clears[i];
+        findgarbage(x, y, chain, garbage);
+    }
+
+    garbage.sort((a,b) => ncols*(a[1]-b[1]) + a[0]-b[0]);
+    var cvf = vframe + garbage_inittime + garbage.length*garbage_blocktime + garbage_finaltime;
+    var colors = randcols(garbage.length);
+    for(var i=0; i<garbage.length; i++){
+        var [x,y,chain] = garbage[i];
+        grid[y][x].chain = chain;
+        grid[y][x].clearvframe = cvf;
+        grid[y][x].revealvframe = vframe + garbage_inittime + i*garbage_blocktime;
+        grid[y][x].revealcolor = colors[i];
+    }
+
+    // add freeze time if needed
     ftimer += combo_ftime(numcleared);
     ftimer += chain_ftime(maxchain);
 }

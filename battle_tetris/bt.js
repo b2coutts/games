@@ -38,16 +38,6 @@ window.onload=function(){
     main();
 }
 
-function randrow(){
-    var row = new Array(ncols);
-    for(var i=0; i<ncols; i++){
-        do{
-            row[i] = mkblock(block_cols[randint(block_cols.length)]);
-        }while(i>=2 && row[i-2].col === row[i-1].col && row[i-1].col === row[i].col);
-    }
-    return row;
-}
-
 function gridshift(){
     for(var x=0; x<ncols; x++){
         if(grid[0][x] !== null) return false;
@@ -99,7 +89,10 @@ window.main = function(){
         if(e.code === 'KeyG'){
             for(var y=nrows-1; y>0; y--){
                 if(grid[y].every(p => p === null)){
-                    spawn_garbage(0, y, ncols);
+                    //spawn_garbage(0, y, ncols);
+                    var len = randint(ncols-2)+3;
+                    var start = randint(ncols-len);
+                    spawn_garbage(start, y, len);
                     break;
                 }
             }
@@ -137,12 +130,22 @@ window.main = function(){
         for(var x=0; x<ncols; x++){
             var block = grid[y][x];
             if(block === null) continue;
+            if('justblocked' in block) block.justblocked--;
+
             if(block.clearvframe !== null){
-                if(vframe >= block.clearvframe + cleartime){
-                    if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
-                        grid[y-1][x].chain = block.chain + 1;
+                var this_cleartime = block.type === 'garbage' ? 0 : cleartime;
+                if(vframe >= block.clearvframe + this_cleartime){
+                    if(block.type === 'garbage'){
+                        block.type = 'block';
+                        block.clearvframe = null;
+                        block.col = block.revealcolor;
+                        block.justblocked = 2;
+                    }else{
+                        if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
+                            grid[y-1][x].chain = block.chain + 1;
+                        }
+                        grid[y][x] = null;
                     }
-                    grid[y][x] = null;
                 }
             }else if(block.falling !== null){
                 if(vframe >= block.fallvframe){
@@ -172,7 +175,7 @@ window.main = function(){
             }else if(block.type === 'garbage'){
                 var mkfall = true;
                 for(var i=0; i<block.len; i++){
-                    mkfall = mkfall & (grid[y+1][x+i] === null || grid[y+1][x+i].falling !== null);
+                    mkfall = mkfall && y<nrows-1 && (grid[y+1][x+i] === null || grid[y+1][x+i].falling !== null);
                 }
                 if(mkfall) makefall(block);
 
@@ -207,20 +210,41 @@ function draw(){
             var block = grid[y][x];
             if(block !== null){
                 ctx.fillStyle = block.col;
+                var len = block.type === 'garbage' ? block.len : 1;
+                if(block.type === 'garbage' && block.clearvframe !== null){
+                    len=1;
+                    if(vframe >= block.revealvframe) ctx.fillStyle = block.revealcolor;
+                }
                 var ylvl = (y+1)*gsize+2 - offset;
                 if(block.falling !== null) ylvl += block.falling;
-                ctx.fillRect(x*gsize+2, ylvl, gsize-4, gsize-4);
-                if(block.clearvframe !== null){
+                ctx.fillRect(x*gsize+2, ylvl, len*gsize-4, gsize-4);
+                if(block.clearvframe !== null && block.type === 'block'){
                     ctx.fillStyle = '#000000';
                     var sz = (block.clearvframe - vframe) / cleartime * (gsize/2);
                     ctx.fillRect(x*gsize + gsize/2-sz, ylvl-2 + gsize/2-sz, sz*2, sz*2);
                 }
 
-                if(block.clearvframe !== null){
+                if(block.clearvframe !== null && block.type === 'block'){
                     ctx.fillStyle = '#000000';
                     ctx.font = '30px Courier New';
                     ctx.fillText('x' + block.chain, x*gsize+12, ylvl+35);
                 }
+
+                if(block.clearvframe !== null && block.type === 'garbage'){
+                    ctx.save();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillRect(x*gsize+2, ylvl, len*gsize-4, gsize-4);
+                    ctx.restore();
+                }
+
+                if(debug){
+                    ctx.font = '30px Courier New';
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(block.chain, x*gsize+2, ylvl+30);
+                }
+
+                x += len-1;
             }
         }
     }
