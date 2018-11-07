@@ -124,7 +124,7 @@ function findclears(){
         findgarbage(x, y, chain, garbage);
     }
 
-    garbage.sort((a,b) => ncols*(b[1]-a[1]) + a[0]-b[0]);
+    garbage.sort((a,b) => ncols*(a[1]-b[1]) + a[0]-b[0]);
     var cvf = vframe + garbage_inittime + garbage.length*garbage_blocktime + garbage_finaltime;
     var colors = randcols(garbage.length);
     for(var i=0; i<garbage.length; i++){
