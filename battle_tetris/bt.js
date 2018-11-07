@@ -1,3 +1,5 @@
+var ws;
+
 var frame, vframe;
 var ratemult = 1;
 
@@ -29,13 +31,27 @@ function init(){
     if(debug){
         for(var i=3; i<11; i++) grid[i][5] = mkblock(block_cols[i%6]);
     }
+
+    main();
 }
 
 window.onload=function(){
     canvas = document.getElementById('bt');
     ctx = canvas.getContext('2d');
-    init();
-    main();
+    if(online){
+        ws = new WebSocket("ws://127.0.0.1:4733/");
+        ws.onmessage = handleMessage;
+        document.getElementById('joinbutton').onclick = function(){
+            var roomid = document.getElementById('textin').value;
+            joinRoom(roomid);
+        }
+        document.getElementById('makebutton').onclick = function(){
+            var roomid = document.getElementById('textin').value;
+            makeRoom(roomid);
+        }
+    }else{
+        init();
+    }
 }
 
 function gridshift(){
@@ -56,6 +72,7 @@ function gridshift(){
 function game_over(){
     alert('game over');
     gameover = true;
+    sendLoss();
 }
 
 window.main = function(){
@@ -87,15 +104,7 @@ window.main = function(){
             }
         }
         if(e.code === 'KeyG'){
-            for(var y=nrows-1; y>0; y--){
-                if(grid[y].every(p => p === null)){
-                    //spawn_garbage(0, y, ncols);
-                    var len = randint(ncols-2)+3;
-                    var start = randint(ncols-len);
-                    spawn_garbage(start, y, len);
-                    break;
-                }
-            }
+            sendGarbage(randint(4)+3);
         }
     }
     evqueue = [];

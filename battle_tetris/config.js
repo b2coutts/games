@@ -16,6 +16,8 @@ var garbage_finaltime = 15;
 
 var scraccel = .01;
 
+var online = true;
+
 // given a number of cleared blocks, determine how much freeze time should be
 // added
 function combo_ftime(numcleared){
