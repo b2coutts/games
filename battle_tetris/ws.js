@@ -1,17 +1,17 @@
 function handleMessage(event){
     var msg = JSON.parse(event.data);
+    console.log('recd msg: ' + msg);
     if(msg.type ===  'start'){
         init();
     }else if(msg.type === 'garbage'){
-        for(var y=nrows-1; y>0; y--){
+        for(var y=0; y<ymax; y++){
             if(grid[y].every(p => p === null)){
-                var len = randint(ncols-2)+3;
+                var len = msg.len;
                 var start = randint(ncols-len);
                 spawn_garbage(start, y, len);
                 return;
             }
         }
-        game_over();
     }else if(msg.type === 'youwin'){
         gameover = true;
         alert('You win!');

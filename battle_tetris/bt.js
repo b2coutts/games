@@ -7,8 +7,10 @@ var grid, nextrow;
 var offset;
 var ftimer;
 var totallines;
+var scrspd;
 
 var curx, cury;
+var air;
 
 var gameover;
 
@@ -17,20 +19,24 @@ function init(){
     vframe = 0;
 
     nextrow = randrow();
-    grid = new Array(nrows);
-    for(var i=0; i<nrows; i++) grid[i] = new Array(ncols).fill(null);
+    grid = new Array(ymax);
+    for(var i=0; i<ymax; i++) grid[i] = new Array(ncols).fill(null);
     offset = 0;
     ftimer = 0;
     totallines = 0;
+    scrspd = start_scrspd;
 
     curx = Math.floor((ncols-1)/2);
-    cury = Math.floor(nrows*3/4);
+    cury = Math.floor(nrows/4);
+    air = drowntime;
 
     keyInit();
 
+    /*
     if(debug){
         for(var i=3; i<11; i++) grid[i][5] = mkblock(block_cols[i%6]);
     }
+    */
 
     gameover = false;
 
@@ -57,23 +63,34 @@ window.onload=function(){
 }
 
 function gridshift(){
-    for(var x=0; x<ncols; x++){
-        if(grid[0][x] !== null) return false;
-    }
-
-    grid.splice(0,1);
-    grid.push(nextrow);
+    var toprow = grid.pop();
+    if(toprow.some(p => p !== null)) game_over();
+    grid.unshift(nextrow);
     nextrow = randrow();
-    cury = Math.max(0, cury-1);
+    cury = Math.min(nrows-1, cury+1);
     totallines++;
     scrspd += scraccel;
-
-    return true;
 }
 
 function game_over(){
     gameover = true;
-    sendLoss();
+    if(online) sendLoss();
+}
+
+function checklose(){
+    var drowning = false;
+    for(var y=nrows; y<ymax; y++){
+        drowning = drowning || grid[y].some(p => p !== null);
+    }
+
+    if(drowning){
+        air -= ratemult;
+        if(air <= 0) game_over();
+    }else{
+        air = drowntime;
+    }
+
+    return drowning;
 }
 
 window.main = function(){
@@ -82,14 +99,15 @@ window.main = function(){
 
     frame += 1;
     vframe += ratemult;
+    //if(frame%60 !== 0) return;
 
     for(var i=0; i<evqueue.length; i++){
         var e = evqueue[i];
         if(e.code === kbs['up']){
-            cury = Math.max(0, cury-1);
+            cury = Math.min(nrows-1, cury+1);
         }
         if(e.code === kbs['down']){
-            cury = Math.min(nrows-1, cury+1);
+            cury = Math.max(0, cury-1);
         }
         if(e.code === kbs['left']){
             curx = Math.max(0, curx-1);
@@ -105,14 +123,21 @@ window.main = function(){
             }
         }
         if(e.code === 'KeyG'){
-            sendGarbage(randint(4)+3);
+            // weird hack lol
+            if(!online){
+                var len = randint(ncols-2)+3;
+                handleMessage({'data' : '{"type" : "garbage", "len" : ' + len + '}'});
+            }else{
+                sendGarbage(randint(4)+3);
+            }
         }
     }
     evqueue = [];
 
+
     var scramt = scrspd;
     var scrpause = false;
-    for(var y=0; y<nrows; y++){
+    for(var y=0; y<ymax; y++){
         for(var x=0; x<ncols; x++){
             if(grid[y][x] !== null && (grid[y][x].clearvframe !== null || grid[y][x].falling !== null)) scrpause = true;
         }
@@ -122,12 +147,12 @@ window.main = function(){
         scramt = fast_scrspd;
     }
     if(ftimer <= 0 && !scrpause){
-        offset += ratemult * scramt;
-        while(offset > gsize){
-            offset -= gsize;
-            if(!gridshift()){
-                game_over();
-                return;
+        var drowning = checklose();
+        if(!drowning){
+            offset += ratemult * scramt;
+            while(offset > gsize){
+                offset -= gsize;
+                gridshift();
             }
         }
     }else if(!scrpause){
@@ -135,8 +160,7 @@ window.main = function(){
     }
 
     // simulate blocks
-    // iterate backwards over y for falling resolution to work
-    for(var y=nrows-1; y>=0; y--){
+    for(var y=0; y<ymax; y++){
         for(var x=0; x<ncols; x++){
             var block = grid[y][x];
             if(block === null) continue;
@@ -151,8 +175,8 @@ window.main = function(){
                         block.col = block.revealcolor;
                         block.justblocked = 2;
                     }else{
-                        if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
-                            grid[y-1][x].chain = block.chain + 1;
+                        if(y<ymax-1 && grid[y+1][x] !== null && grid[y+1][x].clearvframe === null){
+                            grid[y+1][x].chain = block.chain + 1;
                         }
                         grid[y][x] = null;
                     }
@@ -163,9 +187,9 @@ window.main = function(){
                     block.falling += fallspd * ratemult;
                     if(block.falling >= gsize){
                         for(var i=0; i < len; i++){
-                            grid[y+1][x+i] = block;
+                            grid[y-1][x+i] = block;
                             grid[y][x+i] = null;
-                            if(y === nrows-2 || (grid[y+2][x+i] !== null && grid[y+2][x+i].falling === null)){
+                            if(y === 1 || (grid[y-2][x+i] !== null && grid[y-2][x+i].falling === null)){
                                 block.falling = null;
                             }
                         }
@@ -173,8 +197,8 @@ window.main = function(){
                             block.falling -= gsize;
                             for(var i=0; i < len; i++){
                                 block.fallvframe = vframe;
-                                if(grid[y+2][x+i] !== null && grid[y+2][x+i].falling !== null){
-                                    block.fallvframe = Math.max(block.fallvframe, grid[y+2][x+i].fallvframe);
+                                if(grid[y-2][x+i] !== null && grid[y-2][x+i].falling !== null){
+                                    block.fallvframe = Math.max(block.fallvframe, grid[y-2][x+i].fallvframe);
                                     block.falling = 0;
                                 }
                             }
@@ -185,17 +209,17 @@ window.main = function(){
             }else if(block.type === 'garbage'){
                 var mkfall = true;
                 for(var i=0; i<block.len; i++){
-                    mkfall = mkfall && y<nrows-1 && (grid[y+1][x+i] === null || grid[y+1][x+i].falling !== null);
+                    mkfall = mkfall && y>0 && (grid[y-1][x+i] === null || grid[y-1][x+i].falling !== null);
                 }
                 if(mkfall) makefall(block);
 
                 x += block.len-1;
             }else{
-                if(fallable(block) && y<grid.length-1 &&
-                   (grid[y+1][x] === null || grid[y+1][x].falling !== null)){
+                if(fallable(block) && y>0 &&
+                   (grid[y-1][x] === null || grid[y-1][x].falling !== null)){
                     makefall(block);
-                    if(y>0 && grid[y-1][x] !== null && grid[y-1][x].clearvframe === null){
-                        grid[y-1][x].chain = block.chain;
+                    if(y<ymax-1 && grid[y+1][x] !== null && grid[y+1][x].clearvframe === null){
+                        grid[y+1][x].chain = block.chain;
                     }
                 }else{
                     block.chain = 1;
@@ -215,7 +239,7 @@ function draw(){
 
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, gsize*ncols, gsize*(nrows+1));
-    for(var y=0; y<nrows; y++){
+    for(var y=0; y<nrows+1; y++){
         for(var x=0; x<ncols; x++){
             var block = grid[y][x];
             if(block !== null){
@@ -225,7 +249,9 @@ function draw(){
                     len=1;
                     if(vframe >= block.revealvframe) ctx.fillStyle = block.revealcolor;
                 }
-                var ylvl = (y+1)*gsize+2 - offset;
+                //var ylvl = (y+1)*gsize+2 - offset;
+                var ylvl = (nrows-y)*gsize - offset;
+
                 if(block.falling !== null) ylvl += block.falling;
                 ctx.fillRect(x*gsize+2, ylvl, len*gsize-4, gsize-4);
                 if(block.clearvframe !== null && block.type === 'block'){
@@ -251,7 +277,11 @@ function draw(){
                 if(debug){
                     ctx.font = '30px Courier New';
                     ctx.fillStyle = '#000000';
-                    ctx.fillText(block.chain, x*gsize+2, ylvl+30);
+                    var type = 'S';
+                    if(block.falling !== null) type = 'F';
+                    if(block.clearvframe !== null) type = 'C';
+                    var str = block.chain + type;
+                    ctx.fillText(str, x*gsize+2, ylvl+30);
                 }
 
                 x += len-1;
@@ -265,14 +295,15 @@ function draw(){
     }
     ctx.globalAlpha = 1;
 
+    var bot = nrows*gsize;
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.moveTo(curx*gsize, (cury+1)*gsize-offset);
-    ctx.lineTo((curx+2)*gsize, (cury+1)*gsize-offset);
-    ctx.lineTo((curx+2)*gsize, (cury+2)*gsize-offset);
-    ctx.lineTo(curx*gsize, (cury+2)*gsize-offset);
-    ctx.lineTo(curx*gsize, (cury+1)*gsize-offset);
+    ctx.moveTo(curx*gsize, bot-(cury-1)*gsize-offset);
+    ctx.lineTo((curx+2)*gsize, bot-(cury-1)*gsize-offset);
+    ctx.lineTo((curx+2)*gsize, bot-(cury)*gsize-offset);
+    ctx.lineTo(curx*gsize, bot-(cury)*gsize-offset);
+    ctx.lineTo(curx*gsize, bot-(cury-1)*gsize-offset);
     ctx.stroke();
     ctx.restore();
 
@@ -282,5 +313,7 @@ function draw(){
     ctx.font = '30px Courier New';
     ctx.fillText('Speed: ' + Math.floor(scrspd*100), 10, 50);
     ctx.fillText('Freez: ' + ftimer, 10, 100);
+    ctx.fillText('Air:   ' + air, 10, 150);
+    if(gameover) ctx.fillText('GAME OVER', 10, 400);
     ctx.restore();
 }

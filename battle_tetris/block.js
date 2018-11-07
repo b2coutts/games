@@ -25,7 +25,7 @@ function spawn_garbage(x, y, len){
 
 function swappable(x,y){
     return (grid[y][x] === null || (grid[y][x].falling === null && grid[y][x].clearvframe === null)) &&
-           (y==0 || grid[y-1][x] === null || grid[y-1][x].falling === null);
+           (y<ymax-1 || grid[y+1][x] === null || grid[y+1][x].falling === null);
 }
 
 function fallable(block){
@@ -63,7 +63,7 @@ function randrow(){
 }
 
 function gdfs(x, y, chain, pushto){
-    if(x>=0 && x<ncols && y>=0 && y<nrows &&
+    if(x>=0 && x<ncols && y>=0 && y<ymax &&
        grid[y][x] !== null && grid[y][x].type === 'garbage' && !grid[y][x].clearseen){
         grid[y][x] = Object.assign({}, grid[y][x]);
         grid[y][x].clearseen = true;
@@ -87,7 +87,7 @@ function findclears(){
     var maxchain = 0;
     var numcleared = 0;
     var clears = [];
-    for(var y=0; y<nrows; y++){
+    for(var y=0; y<ymax; y++){
         for(var x=0; x<ncols; x++){
             if(clearable(grid[y][x])){
                 var col = grid[y][x].col;
@@ -101,13 +101,13 @@ function findclears(){
                     }
                     maxchain = Math.max(maxchain, chain);
                 }
-                if(y>1 && clearable(grid[y-1][x], col) && clearable(grid[y-2][x], col)){
-                    var chain = Math.max(grid[y][x].chain,  grid[y-1][x].chain,  grid[y-2][x].chain);
+                if(y<ymax-2 && clearable(grid[y+1][x], col) && clearable(grid[y+2][x], col)){
+                    var chain = Math.max(grid[y][x].chain,  grid[y+1][x].chain,  grid[y+2][x].chain);
                     for(var dy = 0; dy<3; dy++){
-                        if(grid[y-dy][x].clearvframe === null) numcleared++;
-                        grid[y-dy][x].clearvframe = vframe;
-                        grid[y-dy][x].chain = chain;
-                        clears.push([x, y-dy, chain]);
+                        if(grid[y+dy][x].clearvframe === null) numcleared++;
+                        grid[y+dy][x].clearvframe = vframe;
+                        grid[y+dy][x].chain = chain;
+                        clears.push([x, y+dy, chain]);
                     }
                     maxchain = Math.max(maxchain, chain);
                 }
