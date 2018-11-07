@@ -18,11 +18,11 @@ async def mirror(websocket, path):
                 if ws != websocket:
                     return ws
         return None
-        
-    #await send({'type' : 'start'})
 
     roomid = None
     async for message in websocket:
+        if roomid not in rooms:
+            roomid = None
         msg = json.loads(message);
         print('msg is %s' % msg)
         if msg['type'] == 'makeroom':
@@ -52,9 +52,6 @@ async def mirror(websocket, path):
                 rooms[roomid].append(websocket)
                 assert(len(rooms[roomid]) == 2)
                 await asyncio.wait([send({'type' : 'start'}, ws) for ws in rooms[roomid]])
-                #for ws in rooms[roomid]:
-                    #print('starting')
-                    #await send({'type' : 'start'}, ws)
                     
         if msg['type'] == 'garbage':
             opp = get_opponent()
@@ -66,6 +63,8 @@ async def mirror(websocket, path):
             opp = get_opponent()
             if opp:
                 await send({'type' : 'youwin'}, opp)
+            del rooms[roomid]
+            roomid = None
 
 start_server = websockets.serve(mirror, '127.0.0.1', 4733)
 asyncio.get_event_loop().run_until_complete(start_server)

@@ -10,7 +10,7 @@ var totallines;
 
 var curx, cury;
 
-var gameover = false;
+var gameover;
 
 function init(){
     frame = 0;
@@ -31,6 +31,8 @@ function init(){
     if(debug){
         for(var i=3; i<11; i++) grid[i][5] = mkblock(block_cols[i%6]);
     }
+
+    gameover = false;
 
     main();
 }
@@ -70,7 +72,6 @@ function gridshift(){
 }
 
 function game_over(){
-    alert('game over');
     gameover = true;
     sendLoss();
 }
