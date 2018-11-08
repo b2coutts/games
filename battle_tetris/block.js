@@ -25,7 +25,7 @@ function spawn_garbage(x, y, len){
 
 function swappable(x,y){
     return (grid[y][x] === null || (grid[y][x].falling === null && grid[y][x].clearvframe === null)) &&
-           (y<ymax-1 || grid[y+1][x] === null || grid[y+1][x].falling === null);
+           (y===ymax-1 || grid[y+1][x] === null || grid[y+1][x].falling === null);
 }
 
 function fallable(block){
