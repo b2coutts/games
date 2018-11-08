@@ -123,13 +123,7 @@ window.main = function(){
             }
         }
         if(e.code === 'KeyG'){
-            // weird hack lol
-            if(!online){
-                var len = randint(ncols-2)+3;
-                handleMessage({'data' : '{"type" : "garbage", "len" : ' + len + '}'});
-            }else{
-                sendGarbage(randint(4)+3);
-            }
+            doGarbage(randint(ncols-2)+3);
         }
     }
     evqueue = [];

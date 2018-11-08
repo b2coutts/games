@@ -82,6 +82,15 @@ function findgarbage(x, y, chain, pushto){
     gdfs(x, y+1, chain, pushto);
 }
 
+function doGarbage(len){
+    // weird hack lol
+    if(!online){
+        handleMessage({'data' : '{"type" : "garbage", "len" : ' + len + '}'});
+    }else{
+        sendGarbage(len);
+    }
+}
+
 // check for clears
 function findclears(){
     var maxchain = 0;
@@ -138,4 +147,8 @@ function findclears(){
     // add freeze time if needed
     ftimer += combo_ftime(numcleared);
     ftimer += chain_ftime(maxchain);
+
+    // send garbage
+    if(numcleared > 3) doGarbage(Math.min(ncols, numcleared-1));
+    if(maxchain > 1) doGarbage(ncols);
 }
