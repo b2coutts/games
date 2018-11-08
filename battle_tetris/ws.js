@@ -4,14 +4,7 @@ function handleMessage(event){
     if(msg.type ===  'start'){
         init();
     }else if(msg.type === 'garbage'){
-        for(var y=0; y<ymax; y++){
-            if(grid[y].every(p => p === null)){
-                var len = msg.len;
-                var start = randint(ncols-len);
-                spawn_garbage(start, y, len);
-                return;
-            }
-        }
+        garbqueue.push(msg.len);
     }else if(msg.type === 'youwin'){
         gameover = true;
         alert('You win!');

@@ -8,6 +8,7 @@ var offset;
 var ftimer;
 var totallines;
 var scrspd;
+var garbqueue;
 
 var curx, cury;
 var air;
@@ -25,6 +26,7 @@ function init(){
     ftimer = 0;
     totallines = 0;
     scrspd = start_scrspd;
+    garbqueue = [];
 
     curx = Math.floor((ncols-1)/2);
     cury = Math.floor(nrows/4);
@@ -93,6 +95,28 @@ function checklose(){
     return drowning;
 }
 
+function applyGarbage(){
+    if(garbqueue.length === 0) return;
+
+    for(var y=0; y<ymax; y++){
+        if(grid[y].every(p => p === null)){
+            for(var i=0; i<garbqueue.length; i++){
+                if(y+i >= ymax){
+                    game_over();
+                    return;
+                }
+
+                var len = garbqueue[i];
+                var start = randint(ncols-len);
+                spawn_garbage(start, y+i, len);
+            }
+            garbqueue = [];
+            return;
+        }
+    }
+    game_over();
+}
+
 window.main = function(){
     if(gameover) return;
     window.requestAnimationFrame(main);
@@ -136,10 +160,14 @@ window.main = function(){
             if(grid[y][x] !== null && (grid[y][x].clearvframe !== null || grid[y][x].falling !== null)) scrpause = true;
         }
     }
+
     if(isdown('Space') && !scrpause){
         ftimer = 0;
         scramt = fast_scrspd;
     }
+
+    if(!scrpause) applyGarbage();
+
     if(ftimer <= 0 && !scrpause){
         var drowning = checklose();
         if(!drowning){
