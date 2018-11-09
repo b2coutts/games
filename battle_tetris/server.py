@@ -89,6 +89,11 @@ async def gameserver(websocket, path):
                     msg['yourroom'] = roomid
                 await send(msg)
 
+            elif msg['type'] == 'state':
+                opp = get_opponent()
+                if opp:
+                    await(send(msg, opp))
+
             else:
                 print('WARN: unrecognized msg type: %s' % msg['type'])
 

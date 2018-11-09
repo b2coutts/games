@@ -17,6 +17,8 @@ var gameover = true;
 
 var rmlist;
 var myroom;
+var egcolors;
+var enrcolors;
 
 function init(){
     frame = 0;
@@ -37,6 +39,8 @@ function init(){
 
     rmlist = null;
     myroom = null;
+    egcolors = null;
+    enrcolors = null;
 
     keyInit();
 
@@ -196,7 +200,7 @@ window.main = function(){
         }
     }
 
-    if(isdown('Space') && !scrpause){
+    if(isdown(kbs['push']) && !scrpause){
         ftimer = 0;
         scramt = fast_scrspd;
     }
@@ -373,6 +377,26 @@ function draw(){
     ctx.fillText('Air:   ' + air, 10, 150);
     //if(gameover) ctx.fillText('GAME OVER', 10, 400);
     ctx.fillText('GAME OVER', 10, 570);
+
+    // draw online opponent
+    ctx.fillText('  Enemy', 10, 200);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(25, 210, 150, 300);
+    if(egcolors !== null){
+        var peoffset = eoffset * ssize / gsize;
+        var bz = 1;
+        for(var y=0; y<nrows; y++){
+            for(var x=0; x<ncols; x++){
+                ctx.fillStyle = egcolors[y][x];
+                ctx.fillRect(25+x*ssize+bz, 510-(y+1)*ssize-peoffset+bz, ssize-bz*2, ssize-bz*2);
+            }
+        }
+        for(var x=0; x<ncols; x++){
+            ctx.fillStyle = enrcolors[x];
+            ctx.fillRect(25+x*ssize+bz, 510-peoffset+bz, ssize-bz*2, Math.min(peoffset, ssize-bz*2));
+        }
+    }
+
     ctx.restore();
 }
 

@@ -4,6 +4,7 @@ function handleMessage(event){
     if(msg.type === 'init'){
         getRooms();
         setInterval(getRooms, 1000);
+        setInterval(sendState, 1000);
     }else if(msg.type ===  'start'){
         init();
     }else if(msg.type === 'garbage'){
@@ -21,6 +22,10 @@ function handleMessage(event){
     }else if(msg.type === 'dc'){
         gameover = true;
         alert('Your opponent has disconnected');
+    }else if(msg.type === 'state'){
+        egcolors = msg.gcolors;
+        enrcolors = msg.nrcolors;
+        eoffset = msg.offset;
     }else{
         alert('ERROR: unrecognized message type: ' + msg.type);
     }
@@ -56,5 +61,24 @@ function leaveRoom(){
 
 function getRooms(){
     var msg = {'type' : 'getrooms'};
+    ws.send(JSON.stringify(msg));
+}
+
+function cellToColor(cell){
+    if(cell === null) return '#000000';
+    return cell.col;
+}
+
+function sendState(){
+    if(gameover) return;
+
+    var gcolors = grid.slice(0, nrows).map(r => r.map(cellToColor));
+    var nrcolors = nextrow.map(cellToColor);
+
+    var msg = {'type' : 'state',
+               'gcolors' : gcolors,
+               'nrcolors' : nrcolors,
+               'offset' : offset};
+
     ws.send(JSON.stringify(msg));
 }

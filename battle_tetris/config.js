@@ -3,6 +3,7 @@ var debug = false;
 var nrows = 11;
 var ncols = 6;
 var gsize = 50;
+var ssize = 25; // size of enemy display blocks
 var rs = 10; // rowslack; space for imaginary rows above top of screen
 
 var ymax = nrows+rs;

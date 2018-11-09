@@ -24,4 +24,5 @@ var kbs = {
     'left' : 'KeyA',
     'right' : 'KeyD',
     'accept' : 'KeyJ',
+    'push' : 'KeyL',
 };
