@@ -86,7 +86,7 @@ async def gameserver(websocket, path):
                     await broadcast_rooms()
 
             elif msg['type'] == 'leaveroom':
-                await exit_room(users[websocket])
+                await exit_room()
 
             elif msg['type'] == 'garbage':
                 opp = get_opponent()
@@ -111,8 +111,9 @@ async def gameserver(websocket, path):
                 print('WARN: unrecognized msg type: %s' % msg['type'])
 
     finally:
+        await exit_room()
         del users[websocket]
-        await exit_room(users[websocket])
+        await broadcast_rooms()
 
 start_server = websockets.serve(gameserver, '127.0.0.1', 4733)
 asyncio.get_event_loop().run_until_complete(start_server)
