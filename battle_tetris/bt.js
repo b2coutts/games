@@ -17,6 +17,7 @@ var gameover = true;
 
 var rmlist;
 var myroom;
+var numlurkers;
 var egcolors;
 var enrcolors;
 
@@ -100,6 +101,9 @@ function updateRmlist(){
     }else{
         rms.textContent = "You are in room " + myroom + ", playing against an opponent.";
     }
+
+    var lurkerfield = document.getElementById('numlurkers');
+    lurkerfield.textContent = "There are " + numlurkers + " people online.";
 }
 
 function gridshift(){
@@ -185,7 +189,7 @@ window.main = function(){
                 grid[cury][curx+1] = tmp;
             }
         }
-        if(e.code === 'KeyG'){
+        if(e.code === 'KeyG' && debug){
             doGarbage(randint(ncols-2)+3);
         }
     }

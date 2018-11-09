@@ -2,8 +2,6 @@ function handleMessage(event){
     console.log('recd msg: ' + event.data);
     var msg = JSON.parse(event.data);
     if(msg.type === 'init'){
-        getRooms();
-        setInterval(getRooms, 1000);
         setInterval(sendState, 1000);
     }else if(msg.type ===  'start'){
         init();
@@ -15,10 +13,10 @@ function handleMessage(event){
     }else if(msg.type === 'alert'){
         alert(msg.body);
     }else if(msg.type === 'rmlist'){
-        oldrmlist = rmlist;
         rmlist = msg['rmlist'];
+        numlurkers = msg.lurkers;
         myroom = 'yourroom' in msg ? msg['yourroom'] : null;
-        if(JSON.stringify(oldrmlist) !== JSON.stringify(rmlist)) updateRmlist();
+        updateRmlist();
     }else if(msg.type === 'dc'){
         gameover = true;
         alert('Your opponent has disconnected');
@@ -56,11 +54,6 @@ function makeRoom(roomid){
 
 function leaveRoom(){
     var msg = {'type' : 'leaveroom'};
-    ws.send(JSON.stringify(msg));
-}
-
-function getRooms(){
-    var msg = {'type' : 'getrooms'};
     ws.send(JSON.stringify(msg));
 }
 
