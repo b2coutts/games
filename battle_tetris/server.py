@@ -13,12 +13,24 @@ users = {}
 def mkalert(msg):
     return {'type' : 'alert', 'body' : msg}
 
+async def send(msg, ws):
+    #print('sending %s' % json.dumps(msg))
+    await ws.send(json.dumps(msg))
+
+async def broadcast_rooms():
+    sends = []
+    for ws in users:
+        rmlist = sorted([[name, len(ppl)] for (name, ppl) in rooms.items()],
+                        key = lambda x: x[1])
+        msg = {'type' : 'rmlist', 'rmlist' : rmlist, 'lurkers' : len(users)}
+        if users[ws] != None:
+            msg['yourroom'] = users[ws]
+        sends.append(send(msg, ws))
+    if sends:
+        await asyncio.wait(sends)
+
 async def gameserver(websocket, path):
     users[websocket] = None
-
-    async def send(msg, ws=websocket):
-        #print('sending %s' % json.dumps(msg))
-        await ws.send(json.dumps(msg))
     
     def get_opponent():
         if users[websocket] != None:
@@ -26,17 +38,6 @@ async def gameserver(websocket, path):
                 if ws != websocket:
                     return ws
         return None
-
-    async def broadcast_rooms():
-        sends = []
-        for ws in users:
-            rmlist = sorted([[name, len(ppl)] for (name, ppl) in rooms.items()],
-                            key = lambda x: x[1])
-            msg = {'type' : 'rmlist', 'rmlist' : rmlist, 'lurkers' : len(users)}
-            if users[ws] != None:
-                msg['yourroom'] = users[ws]
-            sends.append(send(msg, ws))
-        await asyncio.wait(sends)
         
 
     async def exit_room():
@@ -50,7 +51,7 @@ async def gameserver(websocket, path):
             users[websocket] = None
             await broadcast_rooms()
 
-    await send({'type' : 'init'})
+    await send({'type' : 'init'}, websocket)
     await broadcast_rooms()
     try:
         async for message in websocket:
@@ -60,11 +61,11 @@ async def gameserver(websocket, path):
             #print('msg is %s' % msg)
             if msg['type'] == 'makeroom':
                 if users[websocket] != None:
-                    await send(mkalert('you\'re already in room %s' % users[websocket]))
+                    await send(mkalert('you\'re already in room %s' % users[websocket], websocket))
                 elif msg['roomid'] in rooms:
-                    await send(mkalert('room %s already exists' % msg['roomid']))
+                    await send(mkalert('room %s already exists' % msg['roomid'], websocket))
                 elif len(msg['roomid']) > 50:
-                    await send(mkalert('that room name is 2long :|'))
+                    await send(mkalert('that room name is 2long :|', websocket))
                 else:
                     print('creating room %s' % msg['roomid'])
                     users[websocket] = msg['roomid']
@@ -73,11 +74,11 @@ async def gameserver(websocket, path):
 
             elif msg['type'] == 'joinroom':
                 if users[websocket] != None:
-                    await send(mkalert('you\'re already in room %s' % users[websocket]))
+                    await send(mkalert('you\'re already in room %s' % users[websocket], websocket))
                 elif msg['roomid'] not in rooms:
-                    await send(mkalert('room %s doesn\'t exist' % msg['roomid']))
+                    await send(mkalert('room %s doesn\'t exist' % msg['roomid'], websocket))
                 elif len(rooms[msg['roomid']]) != 1:
-                    await send(mkalert('room %s is full' % msg['roomid']))
+                    await send(mkalert('room %s is full' % msg['roomid'], websocket))
                 else:
                     users[websocket] = msg['roomid']
                     rooms[users[websocket]].append(websocket)
@@ -94,7 +95,7 @@ async def gameserver(websocket, path):
                     await send(msg, opp)
 
             elif msg['type'] == 'loss':
-                await send(mkalert('git gud'))
+                await send(mkalert('git gud'), websocket)
                 opp = get_opponent()
                 if opp:
                     await send({'type' : 'youwin'}, opp)
