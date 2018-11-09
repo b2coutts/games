@@ -1,6 +1,7 @@
 function handleMessage(event){
-    console.log('recd msg: ' + event.data);
     var msg = JSON.parse(event.data);
+    if(msg.type !== 'state') console.log('recd msg: ' + event.data);
+
     if(msg.type === 'init'){
         setInterval(sendState, 1000);
     }else if(msg.type ===  'start'){
