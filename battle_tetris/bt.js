@@ -61,6 +61,7 @@ window.onload=function(){
             var roomid = document.getElementById('textin').value;
             makeRoom(roomid);
         }
+        main();
     }else{
         init();
     }
@@ -151,6 +152,7 @@ function applyGarbage(){
 }
 
 window.main = function(){
+    if(gameover && online) pre_draw();
     if(gameover) return;
     window.requestAnimationFrame(main);
 
@@ -369,6 +371,12 @@ function draw(){
     ctx.fillText('Speed: ' + Math.floor(scrspd*100), 10, 50);
     ctx.fillText('Freez: ' + ftimer, 10, 100);
     ctx.fillText('Air:   ' + air, 10, 150);
-    if(gameover) ctx.fillText('GAME OVER', 10, 400);
+    //if(gameover) ctx.fillText('GAME OVER', 10, 400);
+    ctx.fillText('GAME OVER', 10, 570);
     ctx.restore();
+}
+
+function pre_draw(){
+    ctx.fillStyle = '#505050';
+    ctx.fillRect(0, 0, 500, 600);
 }
