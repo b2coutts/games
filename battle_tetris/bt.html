@@ -1,5 +1,15 @@
 <table><tr><td><canvas id="bt" width="500" height="600"></canvas></td>
 <td>
+    <div id="roomstatus">Connecting...</div>
+    <input type='text' id='textin' />
+    <input type='button' id='makebutton' value='Make room' /> <br><br>
+    <table id="roomtable" border=1>
+        <tr><td width=200>Name</td><td>Space</td><td width=50>Join</td></tr>
+    </table>
+</td>
+<td>
+</td>
+</tr></table>
     <p>
     Controls: <br>
     W: Up <br>
@@ -11,13 +21,6 @@
     <br>
     G: Spawn garbage <br>
     </p>
-</td>
-<td>
-    <input type='text' id='textin' value='asdf'/> <br>
-    <input type='button' id='joinbutton' value='Join room' />
-    <input type='button' id='makebutton' value='Make room' />
-</td>
-</tr></table>
 
 <script src="https://unpkg.com/mathjs@5.2.0/dist/math.min.js"></script>
 <script src="config.js"></script>

@@ -20,7 +20,9 @@ var garbage_finaltime = 15;
 
 var scraccel = .01;
 
-var online = false;
+var online = true;
+//var url = "wss://www.adcoba.com/bt/ws";
+var url = "ws://127.0.0.1:4733/";
 
 // given a number of cleared blocks, determine how much freeze time should be
 // added

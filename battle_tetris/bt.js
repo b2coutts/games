@@ -13,7 +13,10 @@ var garbqueue;
 var curx, cury;
 var air;
 
-var gameover;
+var gameover = true;
+
+var rmlist;
+var myroom;
 
 function init(){
     frame = 0;
@@ -32,6 +35,9 @@ function init(){
     cury = Math.floor(nrows/4);
     air = drowntime;
 
+    rmlist = null;
+    myroom = null;
+
     keyInit();
 
     /*
@@ -49,18 +55,45 @@ window.onload=function(){
     canvas = document.getElementById('bt');
     ctx = canvas.getContext('2d');
     if(online){
-        ws = new WebSocket("ws://127.0.0.1:4733/");
+        ws = new WebSocket(url);
         ws.onmessage = handleMessage;
-        document.getElementById('joinbutton').onclick = function(){
-            var roomid = document.getElementById('textin').value;
-            joinRoom(roomid);
-        }
         document.getElementById('makebutton').onclick = function(){
             var roomid = document.getElementById('textin').value;
             makeRoom(roomid);
         }
     }else{
         init();
+    }
+}
+
+function updateRmlist(){
+    var tbl = document.getElementById('roomtable');
+    while(tbl.rows.length > 1) tbl.deleteRow(1);
+    for(var i=0; i<rmlist.length; i++){
+        var [name, size] = rmlist[i];
+        var row = tbl.insertRow();
+        var joinbutton = document.createElement('BUTTON');
+        joinbutton.appendChild(document.createTextNode(name === myroom ? 'leave' : 'join'));
+        joinbutton.onclick = function(){
+            if(name === myroom){
+                leaveRoom();
+            }else{
+                joinRoom(name);
+            }
+        }
+        if(size >= 2) joinbutton.disabled = true;
+        row.insertCell().appendChild(document.createTextNode(name));
+        row.insertCell().appendChild(document.createTextNode(size + '/2'));
+        row.insertCell().appendChild(joinbutton);
+    }
+
+    var rms = document.getElementById('roomstatus');
+    if(myroom === null){
+        rms.textContent = "Connected. You are not in a room.";
+    }else if(gameover){
+        rms.textContent = "You are in room " + myroom + ", waiting for an opponent.";
+    }else{
+        rms.textContent = "You are in room " + myroom + ", playing against an opponent.";
     }
 }
 
