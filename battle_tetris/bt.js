@@ -43,8 +43,6 @@ function init(){
     egcolors = null;
     enrcolors = null;
 
-    keyInit();
-
     /*
     if(debug){
         for(var i=3; i<11; i++) grid[i][5] = mkblock(block_cols[i%6]);
@@ -59,6 +57,7 @@ function init(){
 window.onload=function(){
     canvas = document.getElementById('bt');
     ctx = canvas.getContext('2d');
+    keyInit();
     if(online){
         ws = new WebSocket(url);
         ws.onmessage = handleMessage;
@@ -68,6 +67,7 @@ window.onload=function(){
         }
         main();
     }else{
+        document.getElementById('makebutton').disabled = true;
         init();
     }
 }
@@ -379,8 +379,7 @@ function draw(){
     ctx.fillText('Speed: ' + Math.floor(scrspd*100), 10, 50);
     ctx.fillText('Freez: ' + ftimer, 10, 100);
     ctx.fillText('Air:   ' + air, 10, 150);
-    //if(gameover) ctx.fillText('GAME OVER', 10, 400);
-    ctx.fillText('GAME OVER', 10, 570);
+    if(gameover) ctx.fillText('GAME OVER', 10, 400);
 
     // draw online opponent
     ctx.fillText('  Enemy', 10, 200);
